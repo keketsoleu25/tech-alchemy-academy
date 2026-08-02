@@ -8,10 +8,30 @@ const navigation = [
 ];
 
 const stats = [
-  { label: "Total XP", value: "720", detail: "+250 this week", accent: "green" },
-  { label: "Current streak", value: "4 days", detail: "Best: 7 days", accent: "amber" },
-  { label: "Trials completed", value: "18", detail: "68% success rate", accent: "purple" },
-  { label: "Global rank", value: "#1,248", detail: "Top 18% of learners", accent: "blue" },
+  {
+    label: "Total XP",
+    value: "720",
+    detail: "+250 this week",
+    accent: "green",
+  },
+  {
+    label: "Current streak",
+    value: "4 days",
+    detail: "Best: 7 days",
+    accent: "amber",
+  },
+  {
+    label: "Trials completed",
+    value: "18",
+    detail: "68% success rate",
+    accent: "purple",
+  },
+  {
+    label: "Global rank",
+    value: "#1,248",
+    detail: "Top 18% of learners",
+    accent: "blue",
+  },
 ];
 
 const modules = [
@@ -86,6 +106,7 @@ export default function DashboardPage() {
                 >
                   {item.symbol}
                 </span>
+
                 {item.label}
               </a>
             ))}
@@ -136,9 +157,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-bold uppercase tracking-[0.22em] text-emerald-300">
                   Apprentice Dashboard
                 </p>
+
                 <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
                   Welcome back, Keketso.
                 </h1>
+
                 <p className="mt-2 text-gray-500">
                   Continue your journey from beginner to Grand Master.
                 </p>
@@ -147,15 +170,17 @@ export default function DashboardPage() {
               <div className="flex items-center gap-3">
                 <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 px-4 py-3">
                   <p className="text-xs text-gray-500">Current rank</p>
-                  <p className="mt-1 font-bold text-amber-300">Apprentice II</p>
+                  <p className="mt-1 font-bold text-amber-300">
+                    Apprentice II
+                  </p>
                 </div>
 
-                <button
-                  type="button"
-                  className="rounded-xl bg-emerald-300 px-5 py-4 text-sm font-black text-black transition hover:bg-emerald-200"
+                <Link
+                  href="/learn/arrays/two-pointers"
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-300 px-5 py-4 text-sm font-black text-black transition hover:bg-emerald-200"
                 >
                   Continue learning
-                </button>
+                </Link>
               </div>
             </header>
 
@@ -167,6 +192,7 @@ export default function DashboardPage() {
                 >
                   <p className="text-sm text-gray-500">{stat.label}</p>
                   <p className="mt-3 text-3xl font-black">{stat.value}</p>
+
                   <p
                     className={`mt-3 text-xs ${
                       stat.accent === "green"
@@ -195,9 +221,11 @@ export default function DashboardPage() {
                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
                           Continue where you stopped
                         </p>
+
                         <h2 className="mt-4 text-2xl font-black">
                           Arrays: The Two-Pointer Technique
                         </h2>
+
                         <p className="mt-3 max-w-xl leading-7 text-gray-400">
                           Learn how two pointers reduce nested loops and solve
                           array problems with better time complexity.
@@ -220,12 +248,12 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      className="mt-7 rounded-xl bg-emerald-300 px-6 py-3.5 text-sm font-black text-black transition hover:bg-emerald-200"
+                    <Link
+                      href="/learn/arrays/two-pointers"
+                      className="mt-7 inline-flex items-center justify-center rounded-xl bg-emerald-300 px-6 py-3.5 text-sm font-black text-black transition hover:bg-emerald-200"
                     >
                       Resume lesson
-                    </button>
+                    </Link>
                   </div>
                 </article>
 
@@ -235,10 +263,14 @@ export default function DashboardPage() {
                       <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">
                         Your curriculum
                       </p>
-                      <h2 className="mt-2 text-2xl font-black">Learning path</h2>
+                      <h2 className="mt-2 text-2xl font-black">
+                        Learning path
+                      </h2>
                     </div>
 
-                    <span className="text-sm text-gray-500">4 of 23 lessons</span>
+                    <span className="text-sm text-gray-500">
+                      4 of 23 lessons
+                    </span>
                   </div>
 
                   <div className="mt-5 space-y-4">
@@ -264,6 +296,7 @@ export default function DashboardPage() {
                             <div className="flex flex-col justify-between gap-2 sm:flex-row">
                               <div>
                                 <h3 className="font-bold">{module.title}</h3>
+
                                 <p className="mt-1 text-sm text-gray-500">
                                   {module.description}
                                 </p>
@@ -305,12 +338,14 @@ export default function DashboardPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">
                       Daily quest
                     </p>
+
                     <span className="rounded-lg bg-amber-300/10 px-3 py-2 text-xs font-bold text-amber-300">
                       +100 XP
                     </span>
                   </div>
 
                   <h2 className="mt-5 text-xl font-black">Reverse an array</h2>
+
                   <p className="mt-3 text-sm leading-6 text-gray-400">
                     Solve today&apos;s challenge without using the built-in
                     reverse method.
