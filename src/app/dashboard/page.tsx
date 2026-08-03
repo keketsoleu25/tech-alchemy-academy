@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { getDashboardData } from "@/lib/dashboard-data";
 
 const navigation = [
@@ -30,7 +31,13 @@ const navigation = [
 export default async function DashboardPage() {
   await connection();
 
-  const data = await getDashboardData();
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
+  const data = await getDashboardData(session.user.email);
 
   if (!data) {
     notFound();

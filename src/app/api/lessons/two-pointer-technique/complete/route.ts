@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const DEMO_LEARNER_EMAIL = "learner@techalchemy.academy";
+
 const LESSON_SLUG = "two-pointer-technique";
 const MAX_TRANSACTION_ATTEMPTS = 3;
 
@@ -23,12 +24,12 @@ function isTransactionConflict(error: unknown) {
   );
 }
 
-async function completeLessonTransaction() {
+async function completeLessonTransaction(learnerEmail: string) {
   return prisma.$transaction(
     async (transaction) => {
       const learner = await transaction.user.findUnique({
         where: {
-          email: DEMO_LEARNER_EMAIL,
+          email: learnerEmail,
         },
       });
 
@@ -151,13 +152,26 @@ async function completeLessonTransaction() {
 }
 
 export async function POST() {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    return NextResponse.json(
+      {
+        status: "error",
+        message: "Authentication required.",
+      },
+      {
+        status: 401,
+      },
+    );
+  }
   for (
     let attempt = 1;
     attempt <= MAX_TRANSACTION_ATTEMPTS;
     attempt++
   ) {
     try {
-      const result = await completeLessonTransaction();
+      const result = await completeLessonTransaction(session.user.email);
 
       return NextResponse.json(result);
     } catch (error) {

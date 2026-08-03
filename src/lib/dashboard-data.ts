@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const DEMO_LEARNER_EMAIL = "learner@techalchemy.academy";
+
 
 function getLessonHref(slug: string) {
   if (slug === "two-pointer-technique") {
@@ -71,10 +71,10 @@ function getInitials(name: string | null) {
     .toUpperCase();
 }
 
-export async function getDashboardData() {
+export async function getDashboardData(learnerEmail: string) {
   const learner = await prisma.user.findUnique({
     where: {
-      email: DEMO_LEARNER_EMAIL,
+      email: learnerEmail,
     },
     include: {
       lessonProgress: {
