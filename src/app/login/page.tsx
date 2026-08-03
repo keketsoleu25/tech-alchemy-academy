@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
+import { SubmitButton } from "@/components/submit-button";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -95,12 +96,11 @@ export default async function LoginPage({
             />
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            idleText="Enter Academy"
+            pendingText="Signing in..."
             className="w-full rounded-xl bg-emerald-300 py-3.5 font-black text-black transition hover:bg-emerald-200"
-          >
-            Enter Academy
-          </button>
+          />
         </form>
 
         <p className="mt-7 text-center text-sm text-gray-500">

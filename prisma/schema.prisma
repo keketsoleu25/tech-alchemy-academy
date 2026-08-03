@@ -58,6 +58,7 @@ model User {
   submissions    Submission[]
   achievements   UserAchievement[]
   dailyActivity  DailyActivity[]
+  xpTransactions XpTransaction[]
 }
 
 model Course {
@@ -223,4 +224,28 @@ model DailyActivity {
 
   @@unique([userId, date])
   @@index([date, xpEarned])
+}
+
+enum XpReason {
+  LESSON_COMPLETE
+  CHALLENGE_FIRST_PASS
+  CHALLENGE_RETRY
+  QUIZ_PASS
+  ACHIEVEMENT_UNLOCK
+  STREAK_BONUS
+}
+
+model XpTransaction {
+  id             String   @id @default(cuid())
+  userId         String
+  amount         Int
+  reason         XpReason
+  sourceType     String
+  sourceId       String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

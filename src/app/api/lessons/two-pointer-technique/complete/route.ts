@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { awardXp } from "@/lib/gamification/award-xp";
 
 export const runtime = "nodejs";
 
@@ -98,14 +99,20 @@ async function completeLessonTransaction(learnerEmail: string) {
         },
       });
 
-      const updatedLearner = await transaction.user.update({
+      const xpResult = await awardXp({
+        tx: transaction,
+        userId: learner.id,
+        amount: lesson.xpReward,
+        reason: "LESSON_COMPLETE",
+        sourceType: "lesson",
+        sourceId: lesson.id,
+      });
+
+      await transaction.user.update({
         where: {
           id: learner.id,
         },
         data: {
-          xp: {
-            increment: lesson.xpReward,
-          },
           lastActivityAt: completedAt,
         },
       });
@@ -139,8 +146,8 @@ async function completeLessonTransaction(learnerEmail: string) {
       return {
         status: "completed",
         alreadyCompleted: false,
-        xpAwarded: lesson.xpReward,
-        totalXp: updatedLearner.xp,
+        xpAwarded: xpResult.awarded ? lesson.xpReward : 0,
+        totalXp: xpResult.totalXp,
       };
     },
     {

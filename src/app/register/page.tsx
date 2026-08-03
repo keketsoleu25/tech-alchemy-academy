@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { SubmitButton } from "@/components/submit-button";
 
 const registrationSchema = z
   .object({
@@ -161,12 +162,11 @@ export default async function RegisterPage({
             />
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            idleText="Create Learner Account"
+            pendingText="Creating account..."
             className="rounded-xl bg-emerald-300 py-3.5 font-black text-black transition hover:bg-emerald-200 sm:col-span-2"
-          >
-            Create Learner Account
-          </button>
+          />
         </form>
 
         <p className="mt-7 text-center text-sm text-gray-500">

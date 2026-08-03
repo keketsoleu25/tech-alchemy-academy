@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="15" fill="#050806"/>
+  <rect x="3" y="3" width="58" height="58" rx="12" fill="#07120c" stroke="#34d399" stroke-width="3"/>
+  <path d="M13 16h38" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity=".28"/>
+  <path d="M13 48h38" stroke="#facc15" stroke-width="2" stroke-linecap="round" opacity=".28"/>
+  <text x="32" y="41" text-anchor="middle" fill="#6ee7b7" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="900" letter-spacing="-1">TA</text>
+</svg>
