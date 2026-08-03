@@ -43,6 +43,13 @@ export default function TwoPointersLessonPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizChecked, setQuizChecked] = useState(false);
   const [lessonComplete, setLessonComplete] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [completionResult, setCompletionResult] = useState<{
+    alreadyCompleted: boolean;
+    xpAwarded: number;
+    totalXp: number;
+  } | null>(null);
 
   const currentSum = numbers[left] + numbers[right];
   const correctAnswer = selectedAnswer === 1;
@@ -85,6 +92,46 @@ export default function TwoPointersLessonPage() {
   function checkAnswer() {
     if (selectedAnswer !== null) {
       setQuizChecked(true);
+    }
+  }
+
+  async function completeLesson() {
+    setIsCompleting(true);
+    setCompletionError(null);
+
+    try {
+      const response = await fetch(
+        "/api/lessons/two-pointer-technique/complete",
+        {
+          method: "POST",
+        },
+      );
+
+      const result = (await response.json()) as {
+        alreadyCompleted?: boolean;
+        xpAwarded?: number;
+        totalXp?: number;
+        message?: string;
+      };
+
+      if (!response.ok || typeof result.totalXp !== "number") {
+        throw new Error(result.message ?? "Unable to save lesson progress.");
+      }
+
+      setCompletionResult({
+        alreadyCompleted: Boolean(result.alreadyCompleted),
+        xpAwarded: result.xpAwarded ?? 0,
+        totalXp: result.totalXp,
+      });
+      setLessonComplete(true);
+    } catch (error) {
+      setCompletionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save lesson progress.",
+      );
+    } finally {
+      setIsCompleting(false);
     }
   }
 
@@ -411,12 +458,25 @@ export default function TwoPointersLessonPage() {
 
             <button
               type="button"
-              disabled={!canComplete || lessonComplete}
-              onClick={() => setLessonComplete(true)}
+              disabled={!canComplete || lessonComplete || isCompleting}
+              onClick={completeLesson}
               className="mt-6 w-full rounded-xl bg-amber-300 py-3.5 font-black text-black transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-gray-600"
             >
-              {lessonComplete ? "Lesson completed: +150 XP" : "Complete lesson"}
+              {isCompleting
+                ? "Saving progress..."
+                : lessonComplete
+                  ? "Lesson completed"
+                  : "Complete lesson"}
             </button>
+
+            {completionError && (
+              <p
+                aria-live="polite"
+                className="mt-3 text-sm leading-6 text-red-300"
+              >
+                {completionError}
+              </p>
+            )}
           </article>
 
           {lessonComplete && (
@@ -426,8 +486,17 @@ export default function TwoPointersLessonPage() {
               </div>
               <h2 className="mt-4 text-xl font-black">Alchemy complete</h2>
               <p className="mt-2 text-sm leading-6 text-emerald-100/70">
-                You earned 150 XP and unlocked the next lesson.
+                {completionResult?.alreadyCompleted
+                  ? `Your progress was already saved. Total XP: ${completionResult.totalXp}.`
+                  : `You earned ${completionResult?.xpAwarded ?? 0} XP. Total XP: ${completionResult?.totalXp ?? 0}.`}
               </p>
+
+              <Link
+                href="/dashboard"
+                className="mt-5 inline-flex rounded-xl bg-emerald-300 px-5 py-3 text-sm font-black text-black transition hover:bg-emerald-200"
+              >
+                Return to dashboard
+              </Link>
             </article>
           )}
         </aside>
