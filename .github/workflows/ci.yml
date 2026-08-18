@@ -9,6 +9,11 @@ on:
     branches:
       - master
 
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/academy
+  DIRECT_URL: postgresql://postgres:postgres@localhost:5432/academy
+  AUTH_SECRET: ci-only-secret-not-used-at-runtime
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -22,10 +27,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        run: npx prisma generate
 
       - name: Lint
         run: npm run lint

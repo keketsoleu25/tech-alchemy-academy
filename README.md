@@ -2,32 +2,39 @@
 
 **Turn logic into mastery.**
 
-A gamified learning management system for Data Structures and Algorithms, built as a full-stack portfolio project. Structured learning paths, server-authoritative XP, and original coding challenges — built from the ground up with production-grade security and data-integrity practices, not just working UI.
+A gamified learning management system for Data Structures and Algorithms, built as a full-stack portfolio project. Structured learning paths, server-authoritative XP, and original coding challenges â€” built from the ground up with production-grade security and data-integrity practices, not just working UI.
 
 ## Project status
 
-This project is under active development. The current build includes one complete, end-to-end learning flow (lesson content, progress tracking, and XP awarding) as a proof of the core architecture, with the surrounding curriculum, challenge execution, and instructor/admin tooling still in progress.
+The Academy now has a usable learner MVP: authentication, a database-backed curriculum, reusable lesson pages, progress tracking, server-authoritative XP, leaderboard data, and a Challenge Arena submission pipeline.
 
 **What works today:**
-- Credentials-based authentication (NextAuth)
-- One fully built lesson (`Two-Pointer Technique`) with progress tracking
+- Credentials-based authentication with NextAuth
+- Six seeded lessons rendered through reusable dynamic lesson routes
+- Module XP locks and lesson progress tracking
 - Server-side, idempotent XP awarding via an append-only transaction ledger
-- Student dashboard with rank progress, streaks, and leaderboard
-- Daily activity tracking (foundation for streak calculation)
+- Student dashboard with rank progress, streaks, learning path, daily quest and leaderboard
+- Challenge Arena editor and authenticated submission API
+- Hidden challenge tests executed through a configurable isolated Piston runner
+- First-pass-only challenge XP to prevent reward farming
+- Daily activity tracking
+- GitHub Actions lint and TypeScript validation
 
 **In progress / not yet built:**
-- Additional lessons and modules beyond the Initiate rank pilot
-- Coding Challenge Arena (schema exists; execution provider and submission flow not yet wired)
+- Additional curriculum beyond the current DSA pilot
+- More coding challenges beyond the first seeded challenge
 - Quizzes
 - Instructor and administrator tooling
-- Multi-track curriculum (currently DSA-only; schema supports expansion)
-- Automated test suite and CI
+- Multi-track curriculum
+- Automated unit, integration and end-to-end tests
 
 ## Why this project exists
 
-This is a portfolio piece demonstrating full-stack engineering across product design, database architecture, secure API design, and gamification systems — with particular attention to a problem that is easy to get wrong: **making a reward system that cannot be gamed or duplicated.**
+This is a portfolio piece demonstrating full-stack engineering across product design, database architecture, secure API design, and gamification systems â€” with particular attention to reward integrity and safe execution of learner code.
 
-The XP system is built around an append-only `XpTransaction` ledger with a database-enforced idempotency key on every award. XP is never trusted from the client, never incremented optimistically, and every award is traceable to a specific source event. This was a deliberate design decision, not an afterthought — see `src/lib/gamification/award-xp.ts`.
+The XP system is built around an append-only `XpTransaction` ledger with a database-enforced idempotency key on every award. XP is never trusted from the client, never incremented optimistically, and every award is traceable to a specific source event. Lesson and challenge rewards are awarded on the server.
+
+Learner challenge code is never evaluated directly inside the Next.js application process. The Academy delegates execution to a separately isolated Piston-compatible runner configured through environment variables.
 
 ## Tech stack
 
@@ -35,13 +42,15 @@ The XP system is built around an append-only `XpTransaction` ledger with a datab
 - **Styling:** Tailwind CSS 4
 - **Database:** PostgreSQL (Neon), Prisma ORM
 - **Auth:** NextAuth (credentials provider)
+- **Challenge execution:** Piston-compatible isolated runner
 - **Deployment target:** Vercel
 
 ## Getting started (Windows / PowerShell)
 
 ### Prerequisites
 - Node.js 20+
-- A PostgreSQL database (this project uses [Neon](https://neon.tech))
+- A PostgreSQL database (this project uses Neon)
+- A Piston-compatible runner if you want live Challenge Arena execution
 
 ### Setup
 
@@ -80,29 +89,40 @@ Visit `http://localhost:3000`.
 
 ## Environment variables
 
-See `.env.example` for the full list of required variables. At minimum you will need:
-- `DATABASE_URL` — your PostgreSQL connection string
-- `AUTH_SECRET` — a random secret used by NextAuth (generate with `npx auth secret`)
+See `.env.example` for the full list. Core variables:
+- `DATABASE_URL` â€” PostgreSQL connection string
+- `DIRECT_URL` â€” optional direct PostgreSQL connection used for migrations/seeding
+- `AUTH_SECRET` â€” NextAuth secret
+- `CHALLENGE_RUNNER_URL` â€” base URL of the isolated Piston-compatible execution service
+- `CHALLENGE_RUNNER_TOKEN` â€” optional bearer token for a protected runner/proxy
 
-Never commit a real `.env` file — it is excluded via `.gitignore`.
+Never commit a real `.env` file â€” it is excluded via `.gitignore`.
 
-## Project structure## Known limitations
+## Challenge execution
 
-- Only one lesson is fully implemented end-to-end; the broader curriculum is scaffolded in the schema but not yet content-populated.
-- The coding-challenge execution pathway is not yet connected to a real or mock sandbox provider.
-- No automated test suite exists yet.
-- Role model currently supports Learner and Admin; Instructor role is planned but not yet implemented.
+The browser submits learner source code to the Academy API. The API loads hidden test cases from PostgreSQL and sends the code plus a generated test harness to the configured isolated runner. Only the resulting test counts, runtime and safe error summary are stored and returned to the learner.
+
+A successful first pass creates the submission result and awards challenge XP in one database transaction. Re-submitting an already-mastered challenge does not award duplicate XP.
+
+## Known limitations
+
+- The current seed contains one coding challenge.
+- The execution service must be deployed/configured separately from the Vercel application.
+- The current editor is intentionally lightweight and does not yet use Monaco.
+- No automated unit/integration/E2E test suite exists yet.
+- Role model currently supports Learner and Admin; Instructor is planned.
 
 ## Roadmap
 
-- [ ] Build out the full Initiate rank curriculum
-- [ ] Implement the Challenge Arena with a sandboxed code execution provider
+- [x] Build reusable learner lesson flow
+- [x] Implement Challenge Arena submission pipeline
+- [x] Add CI lint and TypeScript validation
+- [ ] Expand the Initiate curriculum and challenge library
 - [ ] Add quizzes
 - [ ] Add Instructor role and course-authoring tools
 - [ ] Add Admin moderation and audit tooling
 - [ ] Multi-track curriculum support (TypeScript, Frontend Development, Software Engineering, AI Software Engineering)
 - [ ] Automated test suite (unit, integration, end-to-end)
-- [ ] CI pipeline via GitHub Actions
 
 ## License
 
