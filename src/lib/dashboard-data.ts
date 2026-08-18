@@ -260,7 +260,7 @@ export async function getDashboardData(learnerEmail: string) {
             dailyQuest.difficulty.charAt(0) + dailyQuest.difficulty.slice(1).toLowerCase(),
           xpReward: dailyQuest.xpReward,
           estimatedMinutes: dailyQuest.estimatedMinutes,
-          href: "#",
+          href: `/challenges/${dailyQuest.slug}`,
         }
       : null,
     leaderboard: leaderboardUsers.map((user, index) => ({
