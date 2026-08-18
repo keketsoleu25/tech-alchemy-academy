@@ -39,7 +39,8 @@ export default async function AdminPage() {
             <h1 className="mt-2 text-3xl font-black">Admin & curriculum operations</h1>
             <p className="mt-2 text-sm text-gray-500">Signed in as {admin.name ?? admin.email}</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/analytics" className="rounded-xl border border-emerald-400/30 bg-emerald-400/[0.06] px-4 py-3 text-sm font-bold text-emerald-300 transition hover:bg-emerald-400/10">Analytics</Link>
             <Link href="/dashboard" className="rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-gray-300 transition hover:border-white/20 hover:text-white">Learner view</Link>
             <Link href="/" className="rounded-xl bg-emerald-300 px-4 py-3 text-sm font-black text-black transition hover:bg-emerald-200">Academy home</Link>
           </div>
