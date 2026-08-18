@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getLessonQuiz } from "@/lib/quizzes";
@@ -140,7 +141,7 @@ export async function POST(
         lessonId: lesson.id,
         score,
         passed,
-        answers: parsed.data.answers,
+        answers: parsed.data.answers as Prisma.InputJsonValue,
         xpAwarded: quizXpAwarded,
       },
     });
