@@ -1,22 +1,12 @@
 import { prisma } from "@/lib/prisma";
 
-
-
-function getLessonHref(slug: string) {
-  if (slug === "two-pointer-technique") {
-    return "/learn/arrays/two-pointers";
-  }
-
-  return "#";
+function getLessonHref(moduleSlug: string, lessonSlug: string) {
+  return `/learn/${moduleSlug}/${lessonSlug}`;
 }
 
 function getRankDetails(xp: number) {
   if (xp >= 8000) {
-    return {
-      name: "Grand Master",
-      nextRankXp: 8000,
-      progress: 100,
-    };
+    return { name: "Grand Master", nextRankXp: 8000, progress: 100 };
   }
 
   if (xp >= 4000) {
@@ -59,9 +49,7 @@ function getRankDetails(xp: number) {
 }
 
 function getInitials(name: string | null) {
-  if (!name) {
-    return "TA";
-  }
+  if (!name) return "TA";
 
   return name
     .split(/\s+/)
@@ -73,138 +61,83 @@ function getInitials(name: string | null) {
 
 export async function getDashboardData(learnerEmail: string) {
   const learner = await prisma.user.findUnique({
-    where: {
-      email: learnerEmail,
-    },
+    where: { email: learnerEmail },
     include: {
       lessonProgress: {
         include: {
           lesson: {
-            include: {
-              module: true,
-            },
+            include: { module: true },
           },
         },
-        orderBy: {
-          updatedAt: "desc",
-        },
+        orderBy: { updatedAt: "desc" },
       },
       dailyActivity: {
-        orderBy: {
-          date: "desc",
-        },
+        orderBy: { date: "desc" },
         take: 1,
       },
     },
   });
 
-  if (!learner) {
-    return null;
-  }
+  if (!learner) return null;
 
-  const [
-    modules,
-    leaderboardUsers,
-    higherRankedLearners,
-    dailyQuest,
-    passedChallenges,
-  ] = await Promise.all([
-    prisma.module.findMany({
-      where: {
-        published: true,
-        course: {
+  const [modules, leaderboardUsers, higherRankedLearners, dailyQuest, passedChallenges] =
+    await Promise.all([
+      prisma.module.findMany({
+        where: {
           published: true,
+          course: { published: true },
         },
-      },
-      include: {
-        lessons: {
-          where: {
-            published: true,
-          },
-          orderBy: {
-            order: "asc",
+        include: {
+          lessons: {
+            where: { published: true },
+            orderBy: { order: "asc" },
           },
         },
-      },
-      orderBy: {
-        order: "asc",
-      },
-    }),
-
-    prisma.user.findMany({
-      where: {
-        role: "LEARNER",
-      },
-      orderBy: [
-        {
-          xp: "desc",
+        orderBy: { order: "asc" },
+      }),
+      prisma.user.findMany({
+        where: { role: "LEARNER" },
+        orderBy: [{ xp: "desc" }, { createdAt: "asc" }],
+        take: 5,
+        select: { id: true, name: true, xp: true },
+      }),
+      prisma.user.count({
+        where: {
+          role: "LEARNER",
+          xp: { gt: learner.xp },
         },
-        {
-          createdAt: "asc",
+      }),
+      prisma.challenge.findFirst({
+        where: { published: true },
+        orderBy: { createdAt: "asc" },
+        select: {
+          slug: true,
+          title: true,
+          description: true,
+          difficulty: true,
+          xpReward: true,
+          estimatedMinutes: true,
         },
-      ],
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        xp: true,
-      },
-    }),
-
-    prisma.user.count({
-      where: {
-        role: "LEARNER",
-        xp: {
-          gt: learner.xp,
-        },
-      },
-    }),
-
-    prisma.challenge.findFirst({
-      where: {
-        published: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-      select: {
-        slug: true,
-        title: true,
-        description: true,
-        difficulty: true,
-        xpReward: true,
-        estimatedMinutes: true,
-      },
-    }),
-
-    prisma.submission.count({
-      where: {
-        userId: learner.id,
-        status: "PASSED",
-      },
-    }),
-  ]);
+      }),
+      prisma.submission.count({
+        where: { userId: learner.id, status: "PASSED" },
+      }),
+    ]);
 
   const progressByLesson = new Map(
-    learner.lessonProgress.map((progress) => [
-      progress.lessonId,
-      progress,
-    ]),
+    learner.lessonProgress.map((progress) => [progress.lessonId, progress]),
   );
 
   const moduleCards = modules.map((module) => {
     const completedLessons = module.lessons.filter(
-      (lesson) =>
-        progressByLesson.get(lesson.id)?.status === "COMPLETED",
+      (lesson) => progressByLesson.get(lesson.id)?.status === "COMPLETED",
     ).length;
-
     const totalLessons = module.lessons.length;
-    const progress =
-      totalLessons === 0
-        ? 0
-        : Math.round((completedLessons / totalLessons) * 100);
-
+    const progress = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
     const isUnlocked = learner.xp >= module.requiredXp;
+    const nextLesson = module.lessons.find(
+      (lesson) => progressByLesson.get(lesson.id)?.status !== "COMPLETED",
+    );
 
     const status =
       completedLessons === totalLessons && totalLessons > 0
@@ -215,6 +148,7 @@ export async function getDashboardData(learnerEmail: string) {
 
     return {
       id: module.id,
+      slug: module.slug,
       number: String(module.order).padStart(2, "0"),
       title: module.title,
       description: module.description,
@@ -222,37 +156,48 @@ export async function getDashboardData(learnerEmail: string) {
       lessons: `${completedLessons}/${totalLessons} lessons`,
       status,
       requiredXp: module.requiredXp,
+      href:
+        isUnlocked && nextLesson
+          ? getLessonHref(module.slug, nextLesson.slug)
+          : null,
     };
   });
 
   const activeProgress =
-    learner.lessonProgress.find(
-      (progress) => progress.status === "IN_PROGRESS",
-    ) ??
-    learner.lessonProgress.find(
-      (progress) => progress.status === "AVAILABLE",
-    );
+    learner.lessonProgress.find((progress) => progress.status === "IN_PROGRESS") ??
+    learner.lessonProgress.find((progress) => progress.status === "AVAILABLE");
+
+  let activeLesson = activeProgress?.lesson ?? null;
+
+  if (!activeLesson) {
+    for (const module of modules) {
+      if (learner.xp < module.requiredXp) continue;
+
+      const lesson = module.lessons.find(
+        (item) => progressByLesson.get(item.id)?.status !== "COMPLETED",
+      );
+
+      if (lesson) {
+        activeLesson = {
+          ...lesson,
+          module,
+        };
+        break;
+      }
+    }
+  }
 
   let currentLesson = null;
 
-  if (activeProgress) {
-    const currentModule = modules.find(
-      (module) => module.id === activeProgress.lesson.moduleId,
-    );
-
-    const currentModuleCard = moduleCards.find(
-      (module) => module.id === activeProgress.lesson.moduleId,
-    );
-
-    const lessonIndex =
-      currentModule?.lessons.findIndex(
-        (lesson) => lesson.id === activeProgress.lessonId,
-      ) ?? -1;
+  if (activeLesson) {
+    const currentModule = modules.find((module) => module.id === activeLesson.moduleId);
+    const currentModuleCard = moduleCards.find((module) => module.id === activeLesson.moduleId);
+    const lessonIndex = currentModule?.lessons.findIndex((lesson) => lesson.id === activeLesson?.id) ?? -1;
 
     currentLesson = {
-      title: `${activeProgress.lesson.module.title}: ${activeProgress.lesson.title}`,
-      description: activeProgress.lesson.summary,
-      href: getLessonHref(activeProgress.lesson.slug),
+      title: `${activeLesson.module.title}: ${activeLesson.title}`,
+      description: activeLesson.summary,
+      href: getLessonHref(activeLesson.module.slug, activeLesson.slug),
       progress: currentModuleCard?.progress ?? 0,
       position:
         currentModule && lessonIndex >= 0
@@ -264,7 +209,6 @@ export async function getDashboardData(learnerEmail: string) {
   const completedLessons = learner.lessonProgress.filter(
     (progress) => progress.status === "COMPLETED",
   ).length;
-
   const recentXp = learner.dailyActivity[0]?.xpEarned ?? 0;
   const globalRank = higherRankedLearners + 1;
   const rank = getRankDetails(learner.xp);
@@ -280,7 +224,6 @@ export async function getDashboardData(learnerEmail: string) {
       globalRank,
       rank,
     },
-
     stats: [
       {
         label: "Total XP",
@@ -307,23 +250,19 @@ export async function getDashboardData(learnerEmail: string) {
         accent: "blue",
       },
     ],
-
     modules: moduleCards,
     currentLesson,
-
     dailyQuest: dailyQuest
       ? {
           title: dailyQuest.title,
           description: dailyQuest.description,
           difficulty:
-            dailyQuest.difficulty.charAt(0) +
-            dailyQuest.difficulty.slice(1).toLowerCase(),
+            dailyQuest.difficulty.charAt(0) + dailyQuest.difficulty.slice(1).toLowerCase(),
           xpReward: dailyQuest.xpReward,
           estimatedMinutes: dailyQuest.estimatedMinutes,
           href: "#",
         }
       : null,
-
     leaderboard: leaderboardUsers.map((user, index) => ({
       rank: index + 1,
       name: user.name ?? "Anonymous learner",
