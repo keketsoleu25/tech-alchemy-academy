@@ -7,7 +7,7 @@ export default async function AdminChallengesPage() {
   await getAdminUser();
 
   const lessons = await prisma.lesson.findMany({
-    orderBy: [{ module: { order: "asc" } }, { order: "asc" }],
+    orderBy: { order: "asc" },
     select: {
       id: true,
       title: true,
