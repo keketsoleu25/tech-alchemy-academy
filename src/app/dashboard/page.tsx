@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { auth, signOut } from "@/auth";
 import { getDashboardData } from "@/lib/dashboard-data";
 
 const navigation = [
@@ -41,22 +41,46 @@ export default async function DashboardPage() {
             ))}
           </nav>
 
-          <div className="mt-auto rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-amber-300 font-black text-black">{learner.initials}</span>
-              <div className="min-w-0"><p className="truncate text-sm font-bold">{learner.name}</p><p className="text-xs text-emerald-300">{learner.rank.name}</p></div>
+          <div className="mt-auto space-y-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-amber-300 font-black text-black">{learner.initials}</span>
+                <div className="min-w-0"><p className="truncate text-sm font-bold">{learner.name}</p><p className="text-xs text-emerald-300">{learner.rank.name}</p></div>
+              </div>
+              <div className="mt-4">
+                <div className="flex justify-between gap-3 text-[11px] text-gray-500"><span>Next rank</span><span>{learner.xp.toLocaleString()} / {learner.rank.nextRankXp.toLocaleString()} XP</span></div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-amber-300" style={{ width: `${learner.rank.progress}%` }} /></div>
+              </div>
             </div>
-            <div className="mt-4">
-              <div className="flex justify-between gap-3 text-[11px] text-gray-500"><span>Next rank</span><span>{learner.xp.toLocaleString()} / {learner.rank.nextRankXp.toLocaleString()} XP</span></div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-amber-300" style={{ width: `${learner.rank.progress}%` }} /></div>
-            </div>
+
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/login" });
+              }}
+            >
+              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/20 bg-red-400/[0.04] px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-400/10">
+                <span aria-hidden="true">↪</span>
+                Log out
+              </button>
+            </form>
           </div>
         </aside>
 
         <section className="min-w-0">
-          <header className="flex items-center justify-between border-b border-white/10 px-5 py-5 lg:hidden">
+          <header className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5 lg:hidden">
             <Link href="/" className="flex items-center gap-3 font-bold"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-300 text-sm font-black text-black">TA</span>Academy</Link>
-            <span className="rounded-full bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-300">{learner.xp.toLocaleString()} XP</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-300">{learner.xp.toLocaleString()} XP</span>
+              <form
+                action={async () => {
+                  "use server";
+                  await signOut({ redirectTo: "/login" });
+                }}
+              >
+                <button type="submit" className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-300">Log out</button>
+              </form>
+            </div>
           </header>
 
           <div className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
@@ -139,6 +163,20 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          <footer className="border-t border-white/10 px-5 py-6 sm:px-8 lg:px-10">
+            <div className="mx-auto flex max-w-[1500px] flex-col items-center justify-between gap-3 text-center text-xs text-gray-600 sm:flex-row sm:text-left">
+              <span>Tech Alchemy Academy</span>
+              <a
+                href="https://the-tech-alchemy-lab.vercel.app"
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-gray-400 transition hover:text-emerald-300"
+              >
+                Built by The Tech Alchemy Lab ↗
+              </a>
+            </div>
+          </footer>
         </section>
       </div>
     </main>
