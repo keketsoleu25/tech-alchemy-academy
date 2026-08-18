@@ -12,10 +12,12 @@ const submissionSchema = z.object({
   language: z.literal("javascript").default("javascript"),
 });
 
-type StoredTestCase = {
-  input: unknown[];
-  expected: unknown;
-};
+const storedTestCasesSchema = z.array(
+  z.object({
+    input: z.array(z.unknown()),
+    expected: z.unknown(),
+  }),
+);
 
 function getTodayUtc() {
   const today = new Date();
@@ -49,10 +51,17 @@ export async function POST(
   const [learner, challenge] = await Promise.all([
     prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true },
+      select: { id: true, xp: true },
     }),
     prisma.challenge.findFirst({
       where: { slug: challengeSlug, published: true },
+      include: {
+        lesson: {
+          include: {
+            module: true,
+          },
+        },
+      },
     }),
   ]);
 
@@ -67,6 +76,23 @@ export async function POST(
     return NextResponse.json(
       { status: "error", message: "Challenge not found." },
       { status: 404 },
+    );
+  }
+
+  if (challenge.lesson && learner.xp < challenge.lesson.module.requiredXp) {
+    return NextResponse.json(
+      { status: "error", message: "Earn more XP to unlock this challenge." },
+      { status: 403 },
+    );
+  }
+
+  const testCases = storedTestCasesSchema.safeParse(challenge.testCases);
+
+  if (!testCases.success || testCases.data.length === 0) {
+    console.error("Challenge has invalid stored test cases:", challenge.id);
+    return NextResponse.json(
+      { status: "error", message: "Challenge tests are not configured correctly." },
+      { status: 500 },
     );
   }
 
@@ -86,20 +112,22 @@ export async function POST(
     runResult = await runChallenge({
       code: parsed.data.code,
       functionName: challenge.functionName,
-      testCases: challenge.testCases as StoredTestCase[],
+      testCases: testCases.data,
     });
   } catch (error) {
     console.error("Challenge runner failed:", error);
+
+    const runnerNotConfigured =
+      error instanceof Error && error.message === "CHALLENGE_RUNNER_NOT_CONFIGURED";
 
     await prisma.submission.update({
       where: { id: submission.id },
       data: {
         status: "FAILED",
         result: {
-          error:
-            error instanceof Error && error.message === "CHALLENGE_RUNNER_NOT_CONFIGURED"
-              ? "Challenge runner is not configured."
-              : "Challenge runner is temporarily unavailable.",
+          error: runnerNotConfigured
+            ? "Challenge runner is not configured."
+            : "Challenge runner is temporarily unavailable.",
         },
       },
     });
@@ -107,10 +135,9 @@ export async function POST(
     return NextResponse.json(
       {
         status: "error",
-        message:
-          error instanceof Error && error.message === "CHALLENGE_RUNNER_NOT_CONFIGURED"
-            ? "Challenge execution is not configured yet."
-            : "Challenge execution is temporarily unavailable.",
+        message: runnerNotConfigured
+          ? "Challenge execution is not configured yet."
+          : "Challenge execution is temporarily unavailable.",
       },
       { status: 503 },
     );
@@ -144,30 +171,32 @@ export async function POST(
       xpAwarded = xpResult.awarded ? challenge.xpReward : 0;
       totalXp = xpResult.totalXp;
 
-      await tx.dailyActivity.upsert({
-        where: {
-          userId_date: {
+      if (xpAwarded > 0) {
+        await tx.dailyActivity.upsert({
+          where: {
+            userId_date: {
+              userId: learner.id,
+              date: getTodayUtc(),
+            },
+          },
+          update: {
+            xpEarned: { increment: xpAwarded },
+            challengesCompleted: { increment: 1 },
+          },
+          create: {
             userId: learner.id,
             date: getTodayUtc(),
+            xpEarned: xpAwarded,
+            lessonsCompleted: 0,
+            challengesCompleted: 1,
           },
-        },
-        update: {
-          xpEarned: { increment: xpAwarded },
-          challengesCompleted: { increment: xpAwarded > 0 ? 1 : 0 },
-        },
-        create: {
-          userId: learner.id,
-          date: getTodayUtc(),
-          xpEarned: xpAwarded,
-          lessonsCompleted: 0,
-          challengesCompleted: xpAwarded > 0 ? 1 : 0,
-        },
-      });
+        });
 
-      await tx.user.update({
-        where: { id: learner.id },
-        data: { lastActivityAt: new Date() },
-      });
+        await tx.user.update({
+          where: { id: learner.id },
+          data: { lastActivityAt: new Date() },
+        });
+      }
     }
 
     await tx.submission.update({
