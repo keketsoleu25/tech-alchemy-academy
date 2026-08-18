@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/admin";
 import { writeAuditEvent } from "@/lib/audit";
@@ -165,7 +166,7 @@ export async function POST(request: Request) {
             data: {
               ...data,
               lessonId: data.lessonId || null,
-              testCases: data.testCases,
+              testCases: data.testCases as Prisma.InputJsonValue,
               published: false,
             },
           });
