@@ -2,86 +2,73 @@
 
 **Turn logic into mastery.**
 
-A gamified learning management system for Data Structures and Algorithms, built as a full-stack portfolio project. Structured learning paths, server-authoritative XP, and original coding challenges — built from the ground up with production-grade security and data-integrity practices, not just working UI.
+A gamified learning platform for Data Structures and Algorithms with structured curriculum, quizzes, coding challenges, server-authoritative XP, achievements, analytics, and an audited administration layer.
 
 ## Project status
 
-The Academy now has a usable learner MVP: authentication, a database-backed curriculum, reusable lesson pages, progress tracking, server-authoritative XP, leaderboard data, and a Challenge Arena submission pipeline.
+The Academy has moved beyond a learner proof-of-concept. The current product includes a learner experience and an operational control room for managing curriculum and Academy activity.
 
-**What works today:**
-- Credentials-based authentication with NextAuth
-- Six seeded lessons rendered through reusable dynamic lesson routes
-- Module XP locks and lesson progress tracking
-- Server-side, idempotent XP awarding via an append-only transaction ledger
-- Student dashboard with rank progress, streaks, learning path, daily quest and leaderboard
-- Challenge Arena editor and authenticated submission API
-- Hidden challenge tests executed through a configurable isolated Piston runner
+**Learner experience:**
+- Credentials authentication with NextAuth
+- Database-backed courses, modules and lessons
+- Reusable lesson pages with module XP gates
+- Lesson quizzes with persisted attempts, best scores and server-side scoring
+- First-pass-only quiz XP and achievement unlocks
+- Challenge Arena with authenticated submissions and hidden tests
+- Piston-compatible isolated challenge execution
 - First-pass-only challenge XP to prevent reward farming
-- Daily activity tracking
-- GitHub Actions lint and TypeScript validation
+- Rank progression, streaks, daily activity, achievements and leaderboard
+- Module-specific continue links and persistent achievement cabinet
 
-**In progress / not yet built:**
-- Additional curriculum beyond the current DSA pilot
-- More coding challenges beyond the first seeded challenge
-- Quizzes
-- Instructor and administrator tooling
-- Multi-track curriculum
-- Automated unit, integration and end-to-end tests
+**Administration and operations:**
+- `/admin` Academy Control Room
+- Server-side ADMIN authorization on every admin mutation
+- Optional `ACADEMY_ADMIN_EMAIL` bootstrap/break-glass administrator
+- Course, module and lesson creation
+- Draft-first publishing controls for courses, modules, lessons and challenges
+- Challenge Forge for starter code, hidden tests and reference solutions
+- Achievement creation and XP configuration
+- Learner/admin role management with self-demotion protection
+- Audit-event ledger for content, publishing and role changes
+- `/admin/analytics` learner analytics for XP momentum, mastery and activity
 
-## Why this project exists
+## Reward integrity
 
-This is a portfolio piece demonstrating full-stack engineering across product design, database architecture, secure API design, and gamification systems — with particular attention to reward integrity and safe execution of learner code.
+XP is controlled by the server and recorded through an append-only `XpTransaction` ledger with database-enforced idempotency keys. Lesson, quiz, challenge and achievement rewards cannot be incremented by trusting client-supplied XP values.
 
-The XP system is built around an append-only `XpTransaction` ledger with a database-enforced idempotency key on every award. XP is never trusted from the client, never incremented optimistically, and every award is traceable to a specific source event. Lesson and challenge rewards are awarded on the server.
+Quiz answers are scored on the server. Correct answer indexes are not included in the public quiz payload. Challenge hidden tests and reference solutions remain server-side.
 
-Learner challenge code is never evaluated directly inside the Next.js application process. The Academy delegates execution to a separately isolated Piston-compatible runner configured through environment variables.
+## Challenge execution
+
+Learner code is never evaluated directly inside the Next.js application process. The Academy delegates execution to a separately isolated Piston-compatible runner configured through environment variables.
+
+A successful first challenge pass records the result and awards XP through the same server-authoritative reward system. Re-submitting an already-mastered challenge does not award duplicate XP.
 
 ## Tech stack
 
-- **Framework:** Next.js 16 (App Router), React 19, TypeScript (strict)
+- **Framework:** Next.js 16 App Router, React 19, TypeScript
 - **Styling:** Tailwind CSS 4
-- **Database:** PostgreSQL (Neon), Prisma ORM
-- **Auth:** NextAuth (credentials provider)
+- **Database:** PostgreSQL / Neon
+- **ORM:** Prisma 7
+- **Auth:** NextAuth credentials provider
+- **Validation:** Zod
 - **Challenge execution:** Piston-compatible isolated runner
 - **Deployment target:** Vercel
 
-## Getting started (Windows / PowerShell)
+## Getting started
 
 ### Prerequisites
 - Node.js 20+
-- A PostgreSQL database (this project uses Neon)
-- A Piston-compatible runner if you want live Challenge Arena execution
+- PostgreSQL database
+- Piston-compatible runner for live coding-challenge execution
 
-### Setup
-
-Clone the repository:
 ```powershell
 git clone https://github.com/keketsoleu25/tech-alchemy-academy.git
 Set-Location -Path ".\tech-alchemy-academy"
-```
-
-Install dependencies:
-```powershell
 npm install
-```
-
-Copy the environment template and fill in your own values:
-```powershell
 Copy-Item -Path ".env.example" -Destination ".env"
-```
-
-Apply database migrations and generate the Prisma client:
-```powershell
 npx prisma migrate dev
-```
-
-Seed the database with initial content:
-```powershell
 npx prisma db seed
-```
-
-Start the development server:
-```powershell
 npm run dev
 ```
 
@@ -89,40 +76,51 @@ Visit `http://localhost:3000`.
 
 ## Environment variables
 
-See `.env.example` for the full list. Core variables:
+See `.env.example` for the full template.
+
 - `DATABASE_URL` — PostgreSQL connection string
-- `DIRECT_URL` — optional direct PostgreSQL connection used for migrations/seeding
+- `DIRECT_URL` — direct PostgreSQL connection used by Prisma migrations/seeding
 - `AUTH_SECRET` — NextAuth secret
-- `CHALLENGE_RUNNER_URL` — base URL of the isolated Piston-compatible execution service
+- `ACADEMY_ADMIN_EMAIL` — optional authenticated-user email that receives bootstrap admin access
+- `CHALLENGE_RUNNER_URL` — Piston-compatible runner base URL
 - `CHALLENGE_RUNNER_TOKEN` — optional bearer token for a protected runner/proxy
 
-Never commit a real `.env` file — it is excluded via `.gitignore`.
+`ACADEMY_ADMIN_EMAIL` is intended as a bootstrap/break-glass control. After promoting another user to the database `ADMIN` role, it can be removed from the deployment environment.
 
-## Challenge execution
+## Database migrations
 
-The browser submits learner source code to the Academy API. The API loads hidden test cases from PostgreSQL and sends the code plus a generated test harness to the configured isolated runner. Only the resulting test counts, runtime and safe error summary are stored and returned to the learner.
+The current schema includes persistence for quiz attempts and an `AuditEvent` ledger. Apply migrations before deploying code that depends on the newest schema.
 
-A successful first pass creates the submission result and awards challenge XP in one database transaction. Re-submitting an already-mastered challenge does not award duplicate XP.
+```powershell
+npx prisma migrate deploy
+```
 
 ## Known limitations
 
-- The current seed contains one coding challenge.
-- The execution service must be deployed/configured separately from the Vercel application.
-- The current editor is intentionally lightweight and does not yet use Monaco.
-- No automated unit/integration/E2E test suite exists yet.
-- Role model currently supports Learner and Admin; Instructor is planned.
+- Current curriculum is still primarily the DSA pilot.
+- Quiz definitions are versioned in code; a visual quiz-authoring CMS is a future phase.
+- Challenge execution requires a separately deployed runner.
+- The challenge editor is lightweight rather than Monaco-based.
+- Role model currently supports Learner and Admin; a distinct Instructor role is still planned.
+- Automated unit, integration and end-to-end coverage still needs expansion.
+- GitHub Actions has recently shown repository/account-side runner failures even for trivial diagnostic jobs; do not treat those infrastructure failures as proof of an application regression without checking the failing step.
 
 ## Roadmap
 
-- [x] Build reusable learner lesson flow
-- [x] Implement Challenge Arena submission pipeline
-- [x] Add CI lint and TypeScript validation
-- [ ] Expand the Initiate curriculum and challenge library
-- [ ] Add quizzes
-- [ ] Add Instructor role and course-authoring tools
-- [ ] Add Admin moderation and audit tooling
-- [ ] Multi-track curriculum support (TypeScript, Frontend Development, Software Engineering, AI Software Engineering)
-- [ ] Automated test suite (unit, integration, end-to-end)
+- [x] Reusable learner lesson flow
+- [x] Quiz system with persisted attempts and XP
+- [x] Achievement unlock system
+- [x] Challenge Arena submission pipeline
+- [x] Academy Control Room
+- [x] Curriculum creation and publishing workflow
+- [x] Challenge Forge
+- [x] Admin audit trail and role controls
+- [x] Learner analytics
+- [ ] Visual quiz-authoring CMS
+- [ ] Instructor role and scoped permissions
+- [ ] Multi-track curriculum (TypeScript, Frontend Development, Software Engineering, AI Software Engineering)
+- [ ] Automated unit, integration and end-to-end test suite
+- [ ] Production deployment of the isolated challenge runner
 
 ## License
 
