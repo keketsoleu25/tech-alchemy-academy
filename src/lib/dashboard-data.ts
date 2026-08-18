@@ -75,6 +75,11 @@ export async function getDashboardData(learnerEmail: string) {
         orderBy: { date: "desc" },
         take: 1,
       },
+      achievements: {
+        include: { achievement: true },
+        orderBy: { unlockedAt: "desc" },
+        take: 6,
+      },
     },
   });
 
@@ -263,6 +268,14 @@ export async function getDashboardData(learnerEmail: string) {
           href: `/challenges/${dailyQuest.slug}`,
         }
       : null,
+    achievements: learner.achievements.map((entry) => ({
+      slug: entry.achievement.slug,
+      name: entry.achievement.name,
+      description: entry.achievement.description,
+      icon: entry.achievement.icon,
+      xpReward: entry.achievement.xpReward,
+      unlockedAt: entry.unlockedAt,
+    })),
     leaderboard: leaderboardUsers.map((user, index) => ({
       rank: index + 1,
       name: user.name ?? "Anonymous learner",
