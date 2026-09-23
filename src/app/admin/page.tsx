@@ -5,6 +5,9 @@ import { AdminAcademyStudio } from "@/components/admin-academy-studio";
 
 export default async function AdminPage() {
   const admin = await getAdminUser();
+  // This server page calculates a request-time window for the activity query.
+  // eslint-disable-next-line react-hooks/purity
+  const activitySince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const [learners, courses, lessons, challenges, quizAttempts, submissions, totalXp, recentActivity] =
     await Promise.all([
@@ -16,7 +19,7 @@ export default async function AdminPage() {
       prisma.submission.count(),
       prisma.user.aggregate({ where: { role: "LEARNER" }, _sum: { xp: true } }),
       prisma.dailyActivity.aggregate({
-        where: { date: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+        where: { date: { gte: activitySince } },
         _sum: { xpEarned: true, lessonsCompleted: true, challengesCompleted: true },
       }),
     ]);
