@@ -175,17 +175,17 @@ export async function getDashboardData(learnerEmail: string) {
   let activeLesson = activeProgress?.lesson ?? null;
 
   if (!activeLesson) {
-    for (const module of modules) {
-      if (learner.xp < module.requiredXp) continue;
+    for (const courseModule of modules) {
+      if (learner.xp < courseModule.requiredXp) continue;
 
-      const lesson = module.lessons.find(
+      const lesson = courseModule.lessons.find(
         (item) => progressByLesson.get(item.id)?.status !== "COMPLETED",
       );
 
       if (lesson) {
         activeLesson = {
           ...lesson,
-          module,
+          module: courseModule,
         };
         break;
       }
