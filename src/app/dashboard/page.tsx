@@ -8,6 +8,7 @@ const navigation = [
   ["Dashboard", "DB", "/dashboard"],
   ["Learning Path", "LP", "#learning-path"],
   ["Challenges", "CH", "#daily-quest"],
+  ["Interview Lab", "IV", "/interviews"],
   ["Achievements", "AC", "#achievements"],
   ["Leaderboard", "LB", "#leaderboard"],
 ] as const;
