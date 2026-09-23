@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 export default async function AdminAnalyticsPage() {
   await getAdminUser();
 
+  // This server page calculates a request-time window for database queries.
+  // eslint-disable-next-line react-hooks/purity
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [activeLearners, topLearners, quizAggregate, passedQuizzes, challengeAggregate, lessonCompletions, daily] = await Promise.all([
     prisma.user.count({ where: { role: "LEARNER", lastActivityAt: { gte: since } } }),
