@@ -64,7 +64,9 @@ export function AdminAcademyStudio({ currentAdminId }: { currentAdminId: string 
   }, []);
 
   useEffect(() => {
-    load().catch((error) => setMessage(error instanceof Error ? error.message : "Could not load admin data."));
+    Promise.resolve()
+      .then(load)
+      .catch((error) => setMessage(error instanceof Error ? error.message : "Could not load admin data."));
   }, [load]);
 
   async function mutate(payload: Record<string, unknown>) {
