@@ -71,6 +71,7 @@ export default function Home() {
             <a href="#challenge" className="transition hover:text-emerald-300">
               Challenges
             </a>
+            <a href="/interviews" className="transition hover:text-emerald-300">Interview Lab</a>
             <a href="#ranks" className="transition hover:text-emerald-300">
               Ranks
             </a>
@@ -198,6 +199,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <section className="border-t border-white/10 bg-emerald-400/[0.04] px-6 py-16 lg:px-8"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-300">After mastery comes the interview</p><h2 className="mt-3 text-3xl font-black">Turn what you know into an answer you can defend.</h2><p className="mt-3 max-w-2xl leading-7 text-gray-400">Practice real junior developer, full-stack and IT support scenarios. Answer under a timer, handle follow-up questions and review your evidence with a clear rubric.</p></div><a href="/interviews" className="shrink-0 rounded-xl bg-emerald-300 px-6 py-4 text-center font-bold text-black hover:bg-emerald-200">Enter Interview Lab →</a></div></section>
 
         <section
           id="path"
