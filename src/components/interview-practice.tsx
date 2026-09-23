@@ -53,18 +53,22 @@ export default function InterviewPractice() {
   const [draft, setDraft] = useState("");
   const [seconds, setSeconds] = useState(0);
   const [ratings, setRatings] = useState<number[][]>([]);
-  const [history, setHistory] = useState<RecordEntry[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const parsed: unknown = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]");
-      return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item.track === "string" && typeof item.score === "number").slice(0, 10) : [];
-    } catch { return []; }
-  });
+  const [history, setHistory] = useState<RecordEntry[]>([]);
   const [saved, setSaved] = useState(false);
   const track = tracks[trackId];
   const questions = track.questions;
   const total = questions.length * criteria.length * 2;
   const score = ratings.flat().reduce((sum, rating) => sum + rating, 0);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const parsed: unknown = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
+        if (Array.isArray(parsed)) setHistory(parsed.filter((item) => item && typeof item.track === "string" && typeof item.score === "number").slice(0, 10));
+      } catch { /* Storage may be disabled. */ }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (stage !== "interview") return;
